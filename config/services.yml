@@ -1,0 +1,8 @@
+services:
+  _defaults:
+    public: true
+
+  interteam_sync.sync_service:
+    class: InterteamSync\SyncService
+    arguments:
+      - 'Custom message'

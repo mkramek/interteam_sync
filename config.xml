@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+	<name>interteam_sync</name>
+	<displayName><![CDATA[InterTeam Sync]]></displayName>
+	<version><![CDATA[1.0.0]]></version>
+	<description><![CDATA[Synchronisation module for InterTeam]]></description>
+	<author><![CDATA[Miłosz Kramek]]></author>
+	<tab><![CDATA[administration]]></tab>
+	<is_configurable>1</is_configurable>
+	<need_instance>1</need_instance>
+</module>
