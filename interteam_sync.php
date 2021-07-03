@@ -30,7 +30,16 @@ if (!defined('_PS_VERSION_')) {
 
 class Interteam_sync extends Module
 {
-    protected $config_form = false;
+    protected $config_form = true;
+	
+	public $tabs = [
+		[
+            'name' => 'Sync products', // One name for all langs
+            'class_name' => 'AdminInterteamSync',
+            'visible' => true,
+            'parent_class_name' => 'SELL',
+        ],
+	];
 
     public function __construct()
     {
@@ -65,7 +74,9 @@ class Interteam_sync extends Module
 
         return parent::install() &&
             $this->registerHook('header') &&
-            $this->registerHook('backOfficeHeader');
+            $this->registerHook('backOfficeHeader') &&
+			$this->registerHook('actionInterteamBeforeSyncForm') &&
+			$this->registerHook('actionInterteamAfterSyncForm');
     }
 
     public function uninstall()
@@ -81,20 +92,26 @@ class Interteam_sync extends Module
      * Load the configuration form
      */
     public function getContent()
-    {
-        /**
-         * If values have been submitted in the form, process.
-         */
-        if (((bool)Tools::isSubmit('submitInterteam_syncModule')) == true) {
-            $this->postProcess();
-        }
+	{
+		$output = null;
 
-        $this->context->smarty->assign('module_dir', $this->_path);
+		if (Tools::isSubmit('submit'.$this->name)) {
+			$interteamSync = strval(Tools::getValue('Interteam_sync'));
 
-        $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
+			if (
+				!$interteamSync ||
+				empty($interteamSync) ||
+				!Validate::isGenericName($interteamSync)
+			) {
+				$output .= $this->displayError($this->l('Invalid Configuration value'));
+			} else {
+				Configuration::updateValue('Interteam_sync', $interteamSync);
+				$output .= $this->displayConfirmation($this->l('Settings updated'));
+			}
+		}
 
-        return $output.$this->renderForm();
-    }
+		return $output.$this->renderForm();
+	}
 
     /**
      * Create the form that will be displayed in the configuration of your module.
@@ -137,57 +154,14 @@ class Interteam_sync extends Module
                 ),
                 'input' => array(
                     array(
-                        'type' => 'switch',
-                        'label' => $this->l('Live mode'),
-                        'name' => 'INTERTEAM_SYNC_LIVE_MODE',
-                        'is_bool' => true,
-                        'desc' => $this->l('Use this module in live mode'),
-                        'values' => array(
-                            array(
-                                'id' => 'active_on',
-                                'value' => true,
-                                'label' => $this->l('Enabled')
-                            ),
-                            array(
-                                'id' => 'active_off',
-                                'value' => false,
-                                'label' => $this->l('Disabled')
-                            )
-                        ),
-                    ),
-                    array(
-                        'type' => 'text',
-                        'desc' => $this->l('Enter a valid WSDL URL'),
-                        'name' => 'INTERTEAM_SYNC_WSDL_URL',
-                        'label' => $this->l('WSDL URL'),
-                    ),
-                    array(
-                        'type' => 'text',
-                        'desc' => $this->l('Enter a valid recipient number'),
-                        'name' => 'INTERTEAM_SYNC_REC_NO',
-                        'label' => $this->l('Recipient number'),
-                    ),
-                    array(
-                        'type' => 'password',
-                        'desc' => $this->l('Enter a valid recipient password'),
-                        'name' => 'INTERTEAM_SYNC_REC_PASS',
-                        'label' => $this->l('Recipient password'),
-                    ),
-                    array(
-                        'type' => 'text',
-                        'desc' => $this->l('Enter a valid section number'),
-                        'name' => 'INTERTEAM_SYNC_SECTION_NO',
-                        'label' => $this->l('Section number'),
-                    ),
-                    array(
-                        'type' => 'text',
-                        'desc' => $this->l('Enter a valid sub-recipient number'),
-                        'name' => 'INTERTEAM_SYNC_SUB_REC_NO',
-                        'label' => $this->l('Sub-recipient number'),
+                        'type' => 'file',
+                        'desc' => $this->l('Upload a correct CSV with products'),
+                        'name' => 'INTERTEAM_SYNC_CSV',
+                        'label' => $this->l('Products CSV'),
                     ),
                 ),
                 'submit' => array(
-                    'title' => $this->l('Save'),
+                    'title' => $this->l('Start synchronization'),
                 ),
             ),
         );
@@ -199,12 +173,7 @@ class Interteam_sync extends Module
     protected function getConfigFormValues()
     {
         return array(
-            'INTERTEAM_SYNC_LIVE_MODE' => Configuration::get('INTERTEAM_SYNC_LIVE_MODE', true),
-            'INTERTEAM_SYNC_WSDL_URL' => Configuration::get('INTERTEAM_SYNC_WSDL_URL', null),
-            'INTERTEAM_SYNC_REC_NO' => Configuration::get('INTERTEAM_SYNC_REC_NO', null),
-            'INTERTEAM_SYNC_REC_PASS' => Configuration::get('INTERTEAM_SYNC_REC_PASS', null),
-            'INTERTEAM_SYNC_SECTION_NO' => Configuration::get('INTERTEAM_SYNC_SECTION_NO', null),
-            'INTERTEAM_SYNC_SUB_REC_NO' => Configuration::get('INTERTEAM_SYNC_SUB_REC_NO', null),
+            'INTERTEAM_SYNC_CSV' => Configuration::get('INTERTEAM_SYNC_CSV', true),
         );
     }
 

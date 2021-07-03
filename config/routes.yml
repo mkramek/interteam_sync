@@ -1,0 +1,10 @@
+route_sync_interteam:
+    path: interteam/sync
+    methods: [GET]
+    defaults:
+        _controller: 'Interteam_sync\Controller\SyncController::sync'
+route_admin_interteam:
+    path: interteam/admin
+    methods: [GET]
+    defaults:
+        _controller: 'Interteam_sync\Controller\AdminController::render'
